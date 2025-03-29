@@ -220,6 +220,12 @@ export function setupAuth(app: Express) {
       });
     }
 
+    // For debugging CSRF
+    console.log('Login attempt headers:', {
+      csrf: req.headers['csrf-token'],
+      cookies: req.headers.cookie
+    });
+
     const userAttempts = failedLoginAttempts.get(username);
     if (userAttempts && userAttempts.lockedUntil && userAttempts.lockedUntil > new Date()) {
       const remainingTime = Math.ceil((userAttempts.lockedUntil.getTime() - Date.now()) / (1000 * 60 * 60));

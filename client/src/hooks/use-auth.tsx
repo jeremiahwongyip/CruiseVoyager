@@ -62,8 +62,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const res = await apiRequest('POST', '/api/auth/login', credentials);
-      return await res.json();
+      try {
+        const res = await apiRequest('POST', '/api/auth/login', credentials);
+        return await res.json();
+      } catch (error: any) {
+        // Handle specific error messages
+        if (error.message.includes('429')) {
+          throw new Error('Too many failed attempts. Please try again later.');
+        } else if (error.message.includes('401')) {
+          throw new Error('Invalid username or password. Please try again.');
+        } else {
+          console.error('Login error details:', error);
+          throw error;
+        }
+      }
     },
     onSuccess: () => {
       toast({
@@ -75,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       navigate('/');
     },
     onError: (error: Error) => {
+      console.log('Login error:', error.message);
       toast({
         title: "Login failed",
         description: error.message || "Please check your credentials and try again.",
@@ -85,8 +98,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterData) => {
-      const res = await apiRequest('POST', '/api/auth/register', data);
-      return await res.json();
+      try {
+        // Remove confirmPassword as it's only for client-side validation
+        const { confirmPassword, ...registerData } = data;
+        const res = await apiRequest('POST', '/api/auth/register', registerData);
+        return await res.json();
+      } catch (error: any) {
+        // Handle specific error messages
+        if (error.message.includes('Username already exists')) {
+          throw new Error('This username is already taken. Please choose another one.');
+        } else if (error.message.includes('Email already exists')) {
+          throw new Error('This email address is already registered. Please use another one or try to log in.');
+        } else {
+          console.error('Registration error details:', error);
+          throw error;
+        }
+      }
     },
     onSuccess: () => {
       toast({
@@ -98,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       navigate('/');
     },
     onError: (error: Error) => {
+      console.log('Registration error:', error.message);
       toast({
         title: "Registration failed",
         description: error.message || "There was an error creating your account.",

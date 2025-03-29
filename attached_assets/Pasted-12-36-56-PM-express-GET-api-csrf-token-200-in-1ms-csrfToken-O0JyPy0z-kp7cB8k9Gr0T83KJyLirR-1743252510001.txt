@@ -1,0 +1,123 @@
+12:36:56 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"O0JyPy0z-kp7cB8k9Gr0T83KJyLirRg…
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+12:39:42 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+12:39:51 PM [express] GET /api/csrf-token 200 in 1ms :: {"csrfToken":"f0YFJ9Xd-OxvtT1Yg7YwuO67IBxW3qx…
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+12:43:02 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+12:43:02 PM [express] GET /api/amenities 200 in 700ms :: []
+12:43:02 PM [express] GET /api/cruises 200 in 711ms :: []
+12:43:02 PM [express] GET /api/destinations 200 in 706ms :: []
+12:43:02 PM [express] GET /api/testimonials 200 in 770ms :: []
+12:43:18 PM [express] GET /api/csrf-token 200 in 2ms :: {"csrfToken":"gkYw5Uj0-XOvO9T_aRbOA6mCcGXyzko…
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+12:47:15 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"Not authenticated"}
+12:47:15 PM [express] GET /api/destinations 304 in 698ms :: []
+12:47:15 PM [express] GET /api/cruises 304 in 705ms :: []
+12:47:26 PM [express] GET /api/csrf-token 200 in 0ms :: {"csrfToken":"fsUbQuNr-m4ZsywndxzPR921DQuPc2u…
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5
+ForbiddenError: invalid csrf token
+    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)
+    at <anonymous> (/home/runner/workspace/server/index.ts:50:5)
+    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)
+    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)
+    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9
+    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)
+    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)
+    at file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:794:7
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/express-rate-limit/dist/index.mjs:676:5

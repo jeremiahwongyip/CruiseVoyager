@@ -41,14 +41,17 @@ const globalLimiter = rateLimit({
 // Apply rate limiting to all requests
 app.use('/api/', globalLimiter);
 
-// Apply CSRF protection to all POST/PUT/DELETE/PATCH requests
+// Map custom routes that need CSRF protection or exclusion
+const csrfExemptRoutes = ['/api/auth/login', '/api/auth/register'];
+
+// Apply CSRF protection
 app.use((req, res, next) => {
-  // Only apply CSRF protection to state-changing methods
-  if (req.method === "GET") {
-    next(); 
-  } else {
-    csrfProtection(req, res, next);
+  // Skip CSRF for GET requests and exempted routes
+  if (req.method === "GET" || csrfExemptRoutes.includes(req.path)) {
+    return next();
   }
+  
+  csrfProtection(req, res, next);
 });
 
 app.use((req, res, next) => {

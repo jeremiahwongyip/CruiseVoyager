@@ -39,39 +39,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Destination Routes
   app.get("/api/destinations", async (req, res, next) => {
     try {
-      // If there are query parameters, log them and pass to searchCruises
+      // Log all query parameters for debugging
       if (Object.keys(req.query).length > 0) {
         console.log("Destination search params:", req.query);
-        
-        // If we have a date parameter, search for cruises with that date
-        if (req.query.date) {
-          const cruises = await storage.searchCruises({
-            departureDate: req.query.date
-          });
-          
-          // Get unique destination IDs from the matched cruises
-          const destinationIds = Array.from(new Set(cruises.map(cruise => cruise.destinationId)));
-          
-          // If we found matching cruises, return their destinations
-          if (destinationIds.length > 0) {
-            const matchedDestinations = await Promise.all(
-              destinationIds.map(id => storage.getDestination(id))
-            );
-            
-            // Filter out any undefined results
-            return res.json(matchedDestinations.filter(Boolean));
-          }
-          
-          // No matching cruises for this date, return empty array
-          return res.json([]);
-        }
       }
       
-      // No specific query parameters, return all destinations
+      // Return all destinations regardless of query parameters
+      // The filtering will be done on the client side
       const destinations = await storage.getDestinations();
-      res.json(destinations);
+      
+      // If no destinations are found, return empty array instead of null
+      res.json(destinations || []);
     } catch (error) {
-      console.error("Error searching destinations:", error);
+      console.error("Error fetching destinations:", error);
       next(error);
     }
   });
