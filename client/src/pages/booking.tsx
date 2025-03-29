@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -80,12 +81,8 @@ const BookingPage = () => {
     enabled: !!cruiseId,
   });
   
-  // Check if user is authenticated
-  const { data: authData, isLoading: isLoadingAuth } = useQuery({
-    queryKey: ['/api/auth/user'],
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  // Use authentication hook
+  const { user, isLoading: isLoadingAuth } = useAuth();
   
   // Forms
   const detailsForm = useForm<BookingFormData>({
@@ -206,13 +203,13 @@ const BookingPage = () => {
   
   // Final booking submission
   const onBookingSubmit = () => {
-    if (!authData?.user) {
+    if (!user) {
       toast({
         title: "Authentication required",
         description: "Please log in to complete your booking.",
         variant: "destructive",
       });
-      navigate('/login');
+      navigate('/auth');
       return;
     }
     
@@ -229,14 +226,15 @@ const BookingPage = () => {
     bookingMutation.mutate(finalBookingData);
   };
   
-  // Redirect to login if not authenticated
-  if (!isLoadingAuth && !authData?.user) {
+  // Note: Using ProtectedRoute component means we don't need this check anymore
+  // It's kept here as an additional security measure
+  if (!isLoadingAuth && !user) {
     toast({
       title: "Authentication required",
       description: "Please log in to book a cruise.",
       variant: "destructive",
     });
-    navigate('/login');
+    navigate('/auth');
     return null;
   }
   
