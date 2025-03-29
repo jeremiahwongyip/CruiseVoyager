@@ -153,13 +153,16 @@ const AuthPage = () => {
                   </div>
                   
                   <div className="text-center mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('register')}
+                    <a
+                      href="#register"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab('register');
+                      }}
                       className="text-sm text-[#1a75bc] hover:text-[#0d4677]"
                     >
                       Don't have an account? Register now
-                    </button>
+                    </a>
                   </div>
                 </form>
               </Form>
@@ -283,13 +286,16 @@ const AuthPage = () => {
                   </div>
                   
                   <div className="text-center mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('login')}
+                    <a
+                      href="#login"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab('login');
+                      }}
                       className="text-sm text-[#1a75bc] hover:text-[#0d4677]"
                     >
                       Already have an account? Sign in
-                    </button>
+                    </a>
                   </div>
                 </form>
               </Form>

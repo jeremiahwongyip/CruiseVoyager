@@ -85,13 +85,38 @@ export function setupAuth(app: Express) {
   });
   
   // Rate limiting for authentication endpoints
+  // Strict rate limiting - 5 attempts in 15 minutes, 
+  // then account is locked for 12 hours (simulated with IP block)
+  const failedLoginAttempts = new Map<string, { count: number, lockedUntil: Date | null }>();
+  
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     limit: 5, // 5 failed attempts per IP per 15 minutes
     standardHeaders: true,
     legacyHeaders: false,
     message: { 
-      message: 'Too many login attempts, please try again later'
+      message: 'Too many login attempts. Your account has been temporarily locked for security. Please try again after 12 hours or contact customer support for assistance.'
+    },
+    keyGenerator: (req) => {
+      // Use the username if provided, otherwise fall back to IP
+      const username = req.body?.username;
+      return username || req.ip;
+    },
+    // Skip check if the lock has expired
+    skip: (req, res) => {
+      const key = req.body?.username || req.ip;
+      const userAttempts = failedLoginAttempts.get(key);
+      
+      if (userAttempts && userAttempts.lockedUntil) {
+        if (userAttempts.lockedUntil < new Date()) {
+          // Lock expired, reset counter
+          failedLoginAttempts.set(key, { count: 0, lockedUntil: null });
+          return true;
+        }
+        // Still locked
+        return false;
+      }
+      return true;
     }
   });
   
@@ -186,13 +211,74 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/auth/login", loginLimiter, (req: Request, res: Response, next: NextFunction) => {
+    // Check if the username is already locked out
+    const username = req.body.username;
+    if (!username) {
+      return res.status(400).json({ 
+        message: "Username is required",
+        field: "username" 
+      });
+    }
+
+    const userAttempts = failedLoginAttempts.get(username);
+    if (userAttempts && userAttempts.lockedUntil && userAttempts.lockedUntil > new Date()) {
+      const remainingTime = Math.ceil((userAttempts.lockedUntil.getTime() - Date.now()) / (1000 * 60 * 60));
+      return res.status(429).json({ 
+        message: `Account temporarily locked for security. Please try again in ${remainingTime} hours or contact customer support.`,
+        locked: true,
+        lockExpiresIn: remainingTime 
+      });
+    }
+
     passport.authenticate("local", (err: Error, user: UserType, info: { message: string }) => {
       if (err) {
         return next(err);
       }
+      
       if (!user) {
-        return res.status(401).json({ message: info.message || "Authentication failed" });
+        // Increment failed login attempt counter
+        const userAttempts = failedLoginAttempts.get(username) || { count: 0, lockedUntil: null };
+        userAttempts.count += 1;
+        
+        // If this is the 5th attempt, lock the account for 12 hours
+        if (userAttempts.count >= 5) {
+          const lockUntil = new Date();
+          lockUntil.setHours(lockUntil.getHours() + 12);
+          userAttempts.lockedUntil = lockUntil;
+          
+          failedLoginAttempts.set(username, userAttempts);
+          
+          return res.status(429).json({ 
+            message: "Account temporarily locked for security. Please try again after 12 hours or contact customer support.",
+            locked: true,
+            lockExpiresIn: 12
+          });
+        }
+        
+        failedLoginAttempts.set(username, userAttempts);
+        
+        // Provide a user-friendly error message
+        let errorMessage = "Invalid username or password";
+        if (info.message === "Invalid username") {
+          errorMessage = "The username you entered doesn't exist.";
+        } else if (info.message === "Invalid password") {
+          errorMessage = "Incorrect password. Please try again.";
+          // Show remaining attempts
+          const remainingAttempts = 5 - userAttempts.count;
+          errorMessage += ` (${remainingAttempts} ${remainingAttempts === 1 ? 'attempt' : 'attempts'} remaining)`;
+        }
+        
+        return res.status(401).json({ 
+          message: errorMessage,
+          remainingAttempts: 5 - userAttempts.count
+        });
       }
+      
+      // Successful login - reset any failed attempts
+      if (failedLoginAttempts.has(username)) {
+        failedLoginAttempts.delete(username);
+      }
+      
       req.login(user, (err) => {
         if (err) {
           return next(err);

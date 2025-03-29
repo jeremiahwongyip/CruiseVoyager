@@ -45,7 +45,7 @@ export async function apiRequest(
   }
   
   // Add CSRF token for state-changing requests
-  if (method !== 'GET' && url !== '/api/auth/login' && url !== '/api/auth/register') {
+  if (method !== 'GET') {
     try {
       const token = await getCsrfToken();
       headers['CSRF-Token'] = token;

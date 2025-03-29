@@ -4,8 +4,13 @@ import { setupVite, serveStatic, log } from "./vite";
 import cookieParser from "cookie-parser";
 import csrf from "csurf";
 import { APP_SECRET } from "./config";
+import rateLimit from "express-rate-limit";
 
 const app = express();
+
+// Trust proxy - important for rate limiting behind a reverse proxy
+app.set('trust proxy', 1);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -17,17 +22,30 @@ const csrfProtection = csrf({
   cookie: {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax", // Changed from strict to lax to allow links from external sites
     signed: true
   }
 });
 
-// Apply CSRF protection to all routes except login and registration
+// Create a global rate limiter to prevent brute force attacks
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many requests from this IP, please try again later"
+  }
+});
+
+// Apply rate limiting to all requests
+app.use('/api/', globalLimiter);
+
+// Apply CSRF protection to all POST/PUT/DELETE/PATCH requests
 app.use((req, res, next) => {
-  const path = req.path;
-  // Exclude authentication endpoints from CSRF checks
-  if (path === "/api/auth/login" || path === "/api/auth/register" || req.method === "GET") {
-    next();
+  // Only apply CSRF protection to state-changing methods
+  if (req.method === "GET") {
+    next(); 
   } else {
     csrfProtection(req, res, next);
   }

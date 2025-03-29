@@ -13,22 +13,65 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { setupAuth, isAuthenticated } from "./auth";
+import csrf from "csurf";
+import cookieParser from "cookie-parser";
+import { APP_SECRET } from "./config";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
   
+  // Create CSRF protection middleware
+  const csrfProtection = csrf({
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      sameSite: "lax",
+      signed: true
+    }
+  });
+
   // CSRF Token Route
-  app.get("/api/csrf-token", (req: Request, res: Response) => {
+  app.get("/api/csrf-token", csrfProtection, (req: Request, res: Response) => {
     res.json({ csrfToken: req.csrfToken() });
   });
 
   // Destination Routes
-  app.get("/api/destinations", async (_req, res, next) => {
+  app.get("/api/destinations", async (req, res, next) => {
     try {
+      // If there are query parameters, log them and pass to searchCruises
+      if (Object.keys(req.query).length > 0) {
+        console.log("Destination search params:", req.query);
+        
+        // If we have a date parameter, search for cruises with that date
+        if (req.query.date) {
+          const cruises = await storage.searchCruises({
+            departureDate: req.query.date
+          });
+          
+          // Get unique destination IDs from the matched cruises
+          const destinationIds = Array.from(new Set(cruises.map(cruise => cruise.destinationId)));
+          
+          // If we found matching cruises, return their destinations
+          if (destinationIds.length > 0) {
+            const matchedDestinations = await Promise.all(
+              destinationIds.map(id => storage.getDestination(id))
+            );
+            
+            // Filter out any undefined results
+            return res.json(matchedDestinations.filter(Boolean));
+          }
+          
+          // No matching cruises for this date, return empty array
+          return res.json([]);
+        }
+      }
+      
+      // No specific query parameters, return all destinations
       const destinations = await storage.getDestinations();
       res.json(destinations);
     } catch (error) {
+      console.error("Error searching destinations:", error);
       next(error);
     }
   });
