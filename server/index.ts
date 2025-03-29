@@ -42,7 +42,11 @@ const globalLimiter = rateLimit({
 app.use('/api/', globalLimiter);
 
 // Map custom routes that need CSRF protection or exclusion
-const csrfExemptRoutes = ['/api/auth/login', '/api/auth/register'];
+const csrfExemptRoutes = [
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/logout' // Add logout route to exempt list
+];
 
 // Apply CSRF protection
 app.use((req, res, next) => {

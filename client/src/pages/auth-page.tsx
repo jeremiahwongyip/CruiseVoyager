@@ -32,7 +32,7 @@ const registerSchema = z.object({
 
 const AuthPage = () => {
   const [_, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState<string>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   
   const { user, isLoading, loginMutation, registerMutation } = useAuth();
   
@@ -93,7 +93,11 @@ const AuthPage = () => {
             Back to home
           </Link>
           
-          <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value: string) => {
+              if (value === 'login' || value === 'register') {
+                setActiveTab(value);
+              }
+            }} className="w-full">
             <TabsList className="grid grid-cols-2 mb-8">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>

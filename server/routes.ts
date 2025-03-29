@@ -44,9 +44,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Destination search params:", req.query);
       }
       
-      // Return all destinations regardless of query parameters
-      // The filtering will be done on the client side
-      const destinations = await storage.getDestinations();
+      let destinations;
+      
+      // Check if we need to search by date
+      if (req.query.date) {
+        try {
+          // Convert the date string to a valid Date object
+          const searchDate = new Date(req.query.date as string);
+          
+          // Only search by date if it's a valid date
+          if (!isNaN(searchDate.getTime())) {
+            console.log(`Searching cruises for date: ${searchDate.toISOString()}`);
+            
+            // We're passing the date parameter but still getting all destinations
+            // since the actual filtering will happen for cruises
+            destinations = await storage.getDestinations();
+          } else {
+            console.error(`Invalid date parameter: ${req.query.date}`);
+            destinations = await storage.getDestinations();
+          }
+        } catch (dateError) {
+          console.error(`Error parsing date: ${req.query.date}`, dateError);
+          destinations = await storage.getDestinations();
+        }
+      } else {
+        // Just get all destinations
+        destinations = await storage.getDestinations();
+      }
       
       // If no destinations are found, return empty array instead of null
       res.json(destinations || []);
