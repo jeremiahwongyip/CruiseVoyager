@@ -2,7 +2,10 @@
 export const DB_URL = process.env.DATABASE_URL || '';
 
 // Application settings
-export const APP_SECRET = process.env.APP_SECRET || 'your_secret_key';
+// Generate a secure random string if APP_SECRET is not set
+import crypto from 'crypto';
+export const APP_SECRET = process.env.APP_SECRET || 
+  crypto.randomBytes(32).toString('hex');
 export const PORT = process.env.PORT || 3000;
 
 // Token settings
