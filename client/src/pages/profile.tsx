@@ -148,28 +148,36 @@ const Profile = () => {
   }
   
   // Note: Since we're using ProtectedRoute, this component will only be rendered if a user exists
+  if (!user) {
+    return null; // Safety check
+  }
+  
   const bookings = bookingsData || [];
   
+  // Explicitly type the bookings for TypeScript
+  const typedBookings = Array.isArray(bookings) ? bookings as Booking[] : [];
+  const typedCruises = Array.isArray(cruises) ? cruises as Cruise[] : [];
+
   // Filter bookings by status
-  const upcomingBookings = bookings.filter(
-    (booking: Booking) => 
+  const upcomingBookings = typedBookings.filter(
+    (booking) => 
       booking.status !== 'cancelled' && 
       new Date(booking.departureDate) >= new Date()
   );
   
-  const pastBookings = bookings.filter(
-    (booking: Booking) => 
+  const pastBookings = typedBookings.filter(
+    (booking) => 
       booking.status !== 'cancelled' && 
       new Date(booking.departureDate) < new Date()
   );
   
-  const cancelledBookings = bookings.filter(
-    (booking: Booking) => booking.status === 'cancelled'
+  const cancelledBookings = typedBookings.filter(
+    (booking) => booking.status === 'cancelled'
   );
   
   // Get cruise details for a booking
   const getCruiseForBooking = (booking: Booking) => {
-    return cruises?.find((cruise: Cruise) => cruise.id === booking.cruiseId);
+    return typedCruises.find((cruise) => cruise.id === booking.cruiseId);
   };
   
   return (
@@ -249,7 +257,7 @@ const Profile = () => {
           
           <TabsContent value="upcoming">
             {upcomingBookings.length > 0 ? (
-              upcomingBookings.map((booking: Booking) => (
+              upcomingBookings.map((booking) => (
                 <BookingCard 
                   key={booking.id} 
                   booking={booking}
@@ -273,7 +281,7 @@ const Profile = () => {
           
           <TabsContent value="past">
             {pastBookings.length > 0 ? (
-              pastBookings.map((booking: Booking) => (
+              pastBookings.map((booking) => (
                 <BookingCard 
                   key={booking.id} 
                   booking={booking}
@@ -291,7 +299,7 @@ const Profile = () => {
           
           <TabsContent value="cancelled">
             {cancelledBookings.length > 0 ? (
-              cancelledBookings.map((booking: Booking) => (
+              cancelledBookings.map((booking) => (
                 <BookingCard 
                   key={booking.id} 
                   booking={booking}

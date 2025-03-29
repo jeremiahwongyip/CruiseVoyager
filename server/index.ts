@@ -1,10 +1,37 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cookieParser from "cookie-parser";
+import csrf from "csurf";
+import { APP_SECRET } from "./config";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add cookie parser for CSRF
+app.use(cookieParser(APP_SECRET));
+
+// Setup CSRF protection
+const csrfProtection = csrf({
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "strict",
+    signed: true
+  }
+});
+
+// Apply CSRF protection to all routes except login and registration
+app.use((req, res, next) => {
+  const path = req.path;
+  // Exclude authentication endpoints from CSRF checks
+  if (path === "/api/auth/login" || path === "/api/auth/register" || req.method === "GET") {
+    next();
+  } else {
+    csrfProtection(req, res, next);
+  }
+});
 
 app.use((req, res, next) => {
   const start = Date.now();

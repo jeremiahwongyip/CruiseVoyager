@@ -17,6 +17,11 @@ import { setupAuth, isAuthenticated } from "./auth";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
+  
+  // CSRF Token Route
+  app.get("/api/csrf-token", (req: Request, res: Response) => {
+    res.json({ csrfToken: req.csrfToken() });
+  });
 
   // Destination Routes
   app.get("/api/destinations", async (_req, res, next) => {

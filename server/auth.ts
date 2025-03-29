@@ -8,6 +8,9 @@ import { storage } from "./storage";
 import { User as UserType, LoginCredentials, RegisterData } from "@shared/schema";
 import { pool } from "./db";
 import { APP_SECRET } from "./config";
+import csrf from "csurf";
+import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
 
 declare global {
   namespace Express {
@@ -32,6 +35,9 @@ export async function comparePasswords(
 }
 
 export function setupAuth(app: Express) {
+  // Cookie parser middleware (required for CSRF)
+  app.use(cookieParser());
+
   // Session setup
   app.use(
     session({
@@ -46,6 +52,8 @@ export function setupAuth(app: Express) {
       cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         secure: process.env.NODE_ENV === "production",
+        httpOnly: true, // Prevents client-side JavaScript from reading the cookie
+        sameSite: 'lax', // Provides some CSRF protection
       },
     })
   );
@@ -53,6 +61,50 @@ export function setupAuth(app: Express) {
   // Initialize Passport
   app.use(passport.initialize());
   app.use(passport.session());
+  
+  // CSRF protection
+  const csrfProtection = csrf({ cookie: true });
+  
+  // Apply CSRF protection to all state-changing routes
+  // excluding login and register endpoints which would need the token first
+  app.use((req, res, next) => {
+    // Skip CSRF check for login, register, and non-state-changing methods
+    if (
+      req.path === '/api/auth/login' ||
+      req.path === '/api/auth/register' ||
+      req.method === 'GET'
+    ) {
+      return next();
+    }
+    return csrfProtection(req, res, next);
+  });
+  
+  // Provide CSRF token
+  app.get('/api/csrf-token', csrfProtection, (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
+  });
+  
+  // Rate limiting for authentication endpoints
+  const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    limit: 5, // 5 failed attempts per IP per 15 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { 
+      message: 'Too many login attempts, please try again later'
+    }
+  });
+  
+  // Rate limiting for password reset
+  const resetLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    limit: 3, // 3 attempts per IP per hour
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+      message: 'Too many password reset attempts, please try again later'
+    }
+  });
 
   // Configure local strategy
   passport.use(
@@ -133,8 +185,8 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/auth/login", (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate("local", (err: Error, user: User, info: { message: string }) => {
+  app.post("/api/auth/login", loginLimiter, (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate("local", (err: Error, user: UserType, info: { message: string }) => {
       if (err) {
         return next(err);
       }
@@ -167,12 +219,12 @@ export function setupAuth(app: Express) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     // Remove password from response
-    const { password, ...userWithoutPassword } = req.user as User;
+    const { password, ...userWithoutPassword } = req.user as UserType;
     res.json(userWithoutPassword);
   });
 
   // Password reset request
-  app.post("/api/auth/reset-request", async (req: Request, res: Response) => {
+  app.post("/api/auth/reset-request", resetLimiter, async (req: Request, res: Response) => {
     try {
       const { email } = req.body;
       const token = await storage.createPasswordResetToken(email);
@@ -195,7 +247,7 @@ export function setupAuth(app: Express) {
   });
 
   // Password reset
-  app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+  app.post("/api/auth/reset-password", resetLimiter, async (req: Request, res: Response) => {
     try {
       const { token, password } = req.body;
       
@@ -231,7 +283,7 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      const userId = (req.user as User).id;
+      const userId = (req.user as UserType).id;
       const userData = req.body;
       
       // Never allow password update through this endpoint
@@ -260,7 +312,7 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "Not authenticated" });
       }
 
-      const userId = (req.user as User).id;
+      const userId = (req.user as UserType).id;
       const { currentPassword, newPassword } = req.body;
       
       // Get the user to verify current password

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { Cruise } from '@shared/schema';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -76,10 +77,13 @@ const BookingPage = () => {
   const [paymentDetails, setPaymentDetails] = useState<PaymentFormData | null>(null);
   
   // Fetch cruise details
-  const { data: cruise, isLoading, error } = useQuery({
+  const { data: cruiseData, isLoading, error } = useQuery<Cruise>({
     queryKey: [`/api/cruises/${cruiseId}`],
     enabled: !!cruiseId,
   });
+  
+  // Properly typed cruise data
+  const cruise = cruiseData as Cruise;
   
   // Use authentication hook
   const { user, isLoading: isLoadingAuth } = useAuth();
