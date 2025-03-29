@@ -1,19 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { useToast } from "@/hooks/use-toast";
 import { useMediaQuery } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/use-auth";
 import { Menu, X, ChevronDown } from "lucide-react";
-
-type User = {
-  id: number;
-  username: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-};
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,32 +11,8 @@ const Navbar = () => {
   const [cruisesDropdown, setCruisesDropdown] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [location, navigate] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { user, logoutMutation } = useAuth();
   
-  const { data: authData } = useQuery({
-    queryKey: ['/api/auth/user'],
-    retry: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
-
-  const user = authData?.user as User | undefined;
-  
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest('POST', '/api/auth/logout', {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out.",
-        variant: "success"
-      });
-      navigate("/");
-    }
-  });
-
   const handleLogout = () => {
     logoutMutation.mutate();
   };
@@ -174,7 +140,7 @@ const Navbar = () => {
                 </button>
               </div>
             ) : (
-              <Link href="/login" className="hidden md:block text-gray-700 hover:text-[#0d4677]">
+              <Link href="/auth" className="hidden md:block text-gray-700 hover:text-[#0d4677]">
                 <span className="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -267,7 +233,7 @@ const Navbar = () => {
                   </button>
                 </>
               ) : (
-                <Link href="/login" className="block py-2 text-gray-700">Login</Link>
+                <Link href="/auth" className="block py-2 text-gray-700">Login</Link>
               )}
             </div>
           </motion.div>
