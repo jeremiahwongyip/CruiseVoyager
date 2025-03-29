@@ -54,7 +54,9 @@ export function setupAuth(app: Express) {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true, // Prevents client-side JavaScript from reading the cookie
         sameSite: 'lax', // Provides some CSRF protection
+        path: '/', // Ensure cookie is available for all paths
       },
+      name: 'cruise_session', // Custom session name for easy identification
     })
   );
 

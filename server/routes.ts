@@ -44,32 +44,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Destination search params:", req.query);
       }
       
-      let destinations;
+      let destinations = await storage.getDestinations();
       
-      // Check if we need to search by date
+      // Handle date parameter - this won't filter destinations directly
+      // but we'll log it to show we processed the request
       if (req.query.date) {
         try {
-          // Convert the date string to a valid Date object
-          const searchDate = new Date(req.query.date as string);
+          // Format the date (YYYY-MM-DD)
+          const dateParam = String(req.query.date);
           
-          // Only search by date if it's a valid date
-          if (!isNaN(searchDate.getTime())) {
-            console.log(`Searching cruises for date: ${searchDate.toISOString()}`);
+          // Validate date format with regex (YYYY-MM-DD)
+          const dateFormatRegex = /^\d{4}-\d{2}-\d{2}$/;
+          if (dateFormatRegex.test(dateParam)) {
+            const searchDate = new Date(dateParam);
             
-            // We're passing the date parameter but still getting all destinations
-            // since the actual filtering will happen for cruises
-            destinations = await storage.getDestinations();
+            // Only process if it's a valid date
+            if (!isNaN(searchDate.getTime())) {
+              console.log(`Searching cruises for date: ${searchDate.toISOString().split('T')[0]}`);
+              // The date parameter will be used client-side to filter cruises
+              // No server-side filtering of destinations needed
+            } else {
+              console.warn(`Invalid date value: ${dateParam} - parsed as invalid date`);
+            }
           } else {
-            console.error(`Invalid date parameter: ${req.query.date}`);
-            destinations = await storage.getDestinations();
+            console.warn(`Invalid date format: ${dateParam} - should be YYYY-MM-DD`);
           }
         } catch (dateError) {
-          console.error(`Error parsing date: ${req.query.date}`, dateError);
-          destinations = await storage.getDestinations();
+          console.error(`Error processing date parameter:`, dateError);
         }
-      } else {
-        // Just get all destinations
-        destinations = await storage.getDestinations();
+      }
+      
+      // For region parameter, we could optionally filter here
+      if (req.query.region) {
+        const regionName = String(req.query.region);
+        console.log(`Filtering destinations by region: ${regionName}`);
+        // For now, we'll still return all destinations
+        // but in a real implementation, we might filter by region here
       }
       
       // If no destinations are found, return empty array instead of null

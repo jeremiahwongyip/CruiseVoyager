@@ -2,8 +2,39 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    // Try to parse response as JSON first
+    let errorMessage: string;
+    try {
+      const clone = res.clone();
+      const json = await clone.json();
+      errorMessage = json.message || JSON.stringify(json);
+    } catch (e) {
+      // If it's not valid JSON, get it as text
+      const text = await res.text() || res.statusText;
+      errorMessage = text;
+    }
+    
+    // Create structured error based on status code
+    switch (res.status) {
+      case 401:
+        console.error('[API] Authentication error:', errorMessage);
+        throw new Error(`Authentication error: ${errorMessage}`);
+      case 403:
+        console.error('[API] Permission denied:', errorMessage);
+        throw new Error(`Permission denied: ${errorMessage}`);
+      case 404:
+        console.error('[API] Not found:', errorMessage);
+        throw new Error(`Not found: ${errorMessage}`);
+      case 422:
+        console.error('[API] Validation error:', errorMessage);
+        throw new Error(`Validation error: ${errorMessage}`);
+      case 429:
+        console.error('[API] Rate limit exceeded:', errorMessage);
+        throw new Error(`Rate limit exceeded: ${errorMessage}`);
+      default:
+        console.error(`[API] Error ${res.status}:`, errorMessage);
+        throw new Error(`${res.status}: ${errorMessage}`);
+    }
   }
 }
 
@@ -12,7 +43,13 @@ let csrfToken: string | null = null;
 let csrfTokenPromise: Promise<string> | null = null;
 
 // Fetch CSRF token if needed
-async function getCsrfToken(): Promise<string> {
+async function getCsrfToken(forceRefresh = false): Promise<string> {
+  // If force refresh, clear current token
+  if (forceRefresh) {
+    csrfToken = null;
+    csrfTokenPromise = null;
+  }
+  
   // Return existing token if available
   if (csrfToken) return csrfToken;
   
@@ -22,28 +59,35 @@ async function getCsrfToken(): Promise<string> {
   // Create new promise to fetch token
   csrfTokenPromise = new Promise<string>(async (resolve, reject) => {
     try {
-      console.log('Fetching new CSRF token');
+      console.log('[CSRF] Fetching new CSRF token');
       const response = await fetch('/api/csrf-token', {
         credentials: 'include',
+        cache: 'no-store', // Don't cache this request
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
       });
       
       if (!response.ok) {
-        console.error(`Failed to fetch CSRF token: ${response.status} ${response.statusText}`);
+        console.error(`[CSRF] Failed to fetch CSRF token: ${response.status} ${response.statusText}`);
         throw new Error(`Failed to fetch CSRF token: ${response.status}`);
       }
       
       const data = await response.json();
       if (!data.csrfToken) {
-        console.error('No CSRF token returned from server');
+        console.error('[CSRF] No CSRF token returned from server');
         throw new Error('No CSRF token returned from server');
       }
       
       const token = data.csrfToken;
       csrfToken = token;
-      console.log('Successfully retrieved CSRF token');
+      console.log('[CSRF] Successfully retrieved CSRF token:', token.substring(0, 10) + '...');
+      // Store the timestamp when we got the token
+      window.localStorage.setItem('csrfTokenTimestamp', Date.now().toString());
       resolve(token);
     } catch (error) {
-      console.error('Error fetching CSRF token:', error);
+      console.error('[CSRF] Error fetching CSRF token:', error);
       // Reset promise so we can try again
       csrfTokenPromise = null;
       reject(error);
@@ -66,17 +110,27 @@ export async function apiRequest(
     headers['Content-Type'] = 'application/json';
   }
   
+  // Check if the token might be too old (over 1 hour) and force refresh if needed
+  const tokenTimestamp = window.localStorage.getItem('csrfTokenTimestamp');
+  const tokenAge = tokenTimestamp ? Date.now() - parseInt(tokenTimestamp) : Infinity;
+  const isTokenStale = tokenAge > 1000 * 60 * 60; // 1 hour
+  
   // Add CSRF token for state-changing requests
   if (method !== 'GET') {
     try {
-      const token = await getCsrfToken();
+      // Force refresh token if it's stale
+      const token = await getCsrfToken(isTokenStale);
       headers['CSRF-Token'] = token;
-    } catch (error) {
-      console.error('Could not add CSRF token to request', error);
       
-      // Don't attempt to make the request without a CSRF token except for auth routes
-      if (!url.includes('/api/auth/')) {
+      console.log(`[API] ${method} ${url} with CSRF token: ${token.substring(0, 10)}...`);
+    } catch (error) {
+      console.error('[API] Could not add CSRF token to request', error);
+      
+      // Auth routes are exempted from CSRF
+      if (!url.includes('/api/auth/login') && !url.includes('/api/auth/register')) {
         throw new Error('CSRF token required but not available');
+      } else {
+        console.log('[API] Proceeding without CSRF token for auth route:', url);
       }
     }
   }
@@ -91,17 +145,29 @@ export async function apiRequest(
   // If we get a CSRF error and haven't retried too many times,
   // invalidate token and retry once
   if (res.status === 403 && 
-      retryCount < 1 && 
-      method !== 'GET' && 
-      !url.includes('/api/auth/')) {
+      retryCount < 2 && 
+      method !== 'GET') {
     
-    console.log('CSRF token rejected, fetching a new token and retrying...');
-    // Reset the token so we'll fetch a new one
-    csrfToken = null;
-    csrfTokenPromise = null;
+    // Check if it's a CSRF error
+    const responseText = await res.text();
+    if (responseText.includes('csrf') || responseText.includes('CSRF')) {
+      console.log('[API] CSRF token rejected, fetching a new token and retrying...');
+      // Force refresh the token
+      await getCsrfToken(true);
+      
+      // Retry the request with the new token
+      return apiRequest(method, url, data, retryCount + 1);
+    }
     
-    // Retry the request with the new token
-    return apiRequest(method, url, data, retryCount + 1);
+    // If it's not a CSRF error, throw the original error
+    throw new Error(`${res.status}: ${responseText}`);
+  }
+
+  // For 403 errors that aren't CSRF related or we've exhausted retries
+  if (res.status === 403) {
+    const responseText = await res.text();
+    console.error('[API] Forbidden error after retries:', responseText);
+    throw new Error(`${res.status}: ${responseText}`);
   }
 
   await throwIfResNotOk(res);
